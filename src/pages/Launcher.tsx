@@ -1,7 +1,7 @@
 import {
   Card, Box,
   CardContent, CardHeader,
-  LinearProgress, ToggleButton, Tooltip, tooltipClasses, Button, Stack, CircularProgress
+  ToggleButton, Tooltip, tooltipClasses, Button, Stack, CircularProgress
 } from '@mui/material';
 import BackgroundImage from '../assets/images/background.png'
 
@@ -179,24 +179,24 @@ export default () => {
           <Stack direction={"row"} spacing={2}>
             {!initialized && <CircularProgress color="warning" size="34px" />}
             {initialized && hasData && !mainRunning && <Button
-                sx={{ fontSize: '1em' }}
+                sx={{ fontSize: '1em', height: '36px' }}
                 variant="contained"
                 onClick={() => runInstance()}
             ><LaunchIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Run')}</Button>}
             {initialized && !hasData && <Button
-                sx={{ fontSize: '1em' }}
+                sx={{ fontSize: '1em', height: '36px' }}
                 variant="contained"
                 disabled={!zipInput.current}
                 onClick={() => zipInput.current?.click()}
             ><ZipIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Select zip archive')}</Button>}
             {initialized && !hasData && <Button
-              sx={{ fontSize: '1em' }}
+              sx={{ fontSize: '1em', height: '36px' }}
               variant="contained"
               disabled={!directoryInput.current}
               onClick={() => directoryInput.current?.click()}
             ><UploadIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Select data folder')}</Button>}
             {initialized && hasData && !mainRunning && <Button
-              sx={{ fontSize: '1em' }}
+              sx={{ fontSize: '1em', height: '36px' }}
               variant="contained"
               onClick={() => removeData()}
             ><DeleteIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Remove data')}</Button>}
@@ -232,7 +232,6 @@ export default () => {
         accept="application/zip"
         style={{ display: 'none' }}
       />
-      {downloadProgress < 100 && <LinearProgress variant="determinate" value={downloadProgress} />}
       <CardContent sx={{
         p: 0,
         m: 0,

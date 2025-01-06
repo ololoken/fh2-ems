@@ -1,16 +1,11 @@
-export type DepsState = { [key in RunDependency]?: boolean }
-
 export type ModuleInitParams = {
   pushMessage: (msg: string) => void
   reportDownloadProgress: (percent: number) => void
-  setDependencies: (deps: DepsState | ((state: DepsState) => DepsState) ) => void
   canvas: HTMLCanvasElement
   ENV: { [key: string]: string | number }
 }
 
-export type ModuleInitialized = Required<Module>
-
-export type Module = Partial<{
+export type Module = {
   ENV: { [key: string]: string | number }
   FS: {
     filesystems: { IDBFS: any, MEMFS: any }
@@ -32,13 +27,10 @@ export type Module = Partial<{
   print: (msg: string) => void
   printErr: (msg: string) => void
   canvas: HTMLCanvasElement
-  instance: Promise<any>
-} & ModuleInitParams>
-
-export enum RunDependency {
-  fsSync = 'required-fsSync',
-  data = 'required-data',
-  manualStart = 'required-manual-start'
+  onExit: (code: number) => void
+  noInitialRun: boolean
+  run: () => void
+  callMain: (args?: any[]) => void
 }
 
 type FSNode = {

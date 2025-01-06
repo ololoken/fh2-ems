@@ -5,6 +5,6 @@ node_modules
 dist
 
 
-fheroes2.data
-fheroes2.wasm
-fheroes2.js
+fheroes2.module.data
+fheroes2.module.wasm
+fheroes2.module.js

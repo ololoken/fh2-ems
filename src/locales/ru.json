@@ -5,7 +5,8 @@
       "Select data folder": "Указать папку с ресурсами игры",
       "Remove data": "Удалить ресурсы",
       "Run": "Запустить",
-      "Select zip archive": "Архив zip"
+      "Select zip archive": "Архив zip",
+      "Toggle Fullscreen": "На весь экран"
     },
     "error": {
       "Internal Server Error": "Очень серьезная ошибка",

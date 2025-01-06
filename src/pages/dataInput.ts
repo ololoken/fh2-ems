@@ -1,0 +1,106 @@
+import throwExpression from '../common/throwExpression';
+import { Module } from '../types/Module';
+import { BlobReader, Uint8ArrayWriter, ZipReader } from '@zip.js/zip.js';
+
+const whitListedFolders = ['data', 'heroes2', 'maps', 'music'];
+const requiredFiles = ['data/HEROES2.AGG', 'data/HEROES2X.AGG']
+
+const filterInput = (relativePath: string) => {
+  if (relativePath.endsWith('/')) return false;
+  const [fileName, ...path] = relativePath.split('/').reverse();
+  if (fileName.startsWith('.')) return false;
+  return path
+    .map(folder => folder.toLocaleLowerCase())
+    .some(folder => whitListedFolders.includes(folder))
+}
+
+const mkdirWithParents = (instance: Module) => (path: string) => {
+  const parts = path.split('/');
+  try { instance?.FS.lookupPath(parts.join('/')) }
+  catch (ignore) {
+    parts.reduce((p, part) => {
+      p = [...p, part];
+      try { instance?.FS.lookupPath(p.join('/')) }
+      catch (ignore) { instance?.FS.mkdir(p.join('/')) }
+      return p;
+    }, new Array<string>());
+  }
+}
+
+export const directoryInputHandler = (instance: Module, setHasData: (hasData: boolean) => void) => ({ target }: Event) => {
+
+  const input = target as HTMLInputElement;
+  if (!input.files) return instance.print('No files selected');
+
+  const files = [...input.files];
+  input.value = '';
+
+  if (files.length === 1) return instance.print('zip archives are not supported yet, sorry');
+  if (files.length > 3000) return instance.print('wrong directory, or your maps collection is really awesome.');
+
+  const filtered = files.filter(({ webkitRelativePath }) => filterInput(webkitRelativePath));
+
+  const requiredResolved = filtered.filter(({ webkitRelativePath: path }) =>
+    requiredFiles.some(rq => path.toLocaleLowerCase().endsWith(rq.toLocaleLowerCase()))).length === 2;
+  if (!requiredResolved) return instance.print('Required data not found in directory');
+
+  filtered.reduce((uploaded, file) => {
+    const [fileName, ...path] = file.webkitRelativePath.split('/').reverse();
+    const [ignore, ...relativePath] = path.reverse();
+
+    mkdirWithParents(instance)(`${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}`);
+
+    const reader = new FileReader();
+    reader.addEventListener('error', console.error);
+    reader.addEventListener('loadend', ({ target }) => {
+      const uri = `${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}/${fileName}`;
+      instance.print(`Writing file ${uri} to virtual fs from ${file.webkitRelativePath}`);
+      instance.FS.writeFile(`${uri}`, new Uint8Array(target?.result as ArrayBuffer ?? throwExpression('')), {
+        encoding: 'binary'
+      });
+      uploaded.push(uri);
+      if (uploaded.length === filtered.length) {
+        instance.print(`Data bundle looks ok. Ready to run...`)
+        instance.FS.syncfs(false, err => {
+          if (err) return instance.print('Failed to sync FS');
+          setHasData(true);
+        })
+      }
+    });
+    reader.readAsArrayBuffer(file);
+    return uploaded;
+  }, new Array<string>);
+}
+
+export const zipInputHandler = (instance: Module, setHasData: (hasData: boolean) => void) => ({ target }: Event) => {
+  const input = target as HTMLInputElement;
+  const file = input.files?.[0] ?? throwExpression('no file provided');
+  input.value = '';
+  const reader = new ZipReader(new BlobReader(file));
+  reader.getEntries({})
+    .then(entries => entries.filter(({ filename: relativePath }) => filterInput(relativePath)))
+    .then(filtered => filtered.reduce((uploaded, entry) => {
+      const [fileName, ...path] = entry.filename.split('/').reverse();
+      const [ignore, ...relativePath] = path.reverse();
+
+      mkdirWithParents(instance)(`${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}`);
+
+      entry.getData?.(new Uint8ArrayWriter).then(data => {
+        const uri = `${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}/${fileName}`;
+        instance.print(`Writing file ${uri} to virtual fs from provided zip archive`);
+        instance.FS.writeFile(`${uri}`, data, {
+          encoding: 'binary'
+        });
+        uploaded.push(uri);
+        if (uploaded.length === filtered.length) {
+          instance.print(`Data bundle looks ok. Continue initialization...`)
+          instance.FS.syncfs(false, err => {
+            if (err) return instance.print('Failed to sync FS');
+            setHasData(true)
+          })
+        }
+      })
+
+      return uploaded;
+    }, new Array<string>))
+}

@@ -5,7 +5,7 @@
     "dev": "vite --mode development --force --port 8086",
     "build": "tsc && vite build --mode production --emptyOutDir",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "codegen:fheroes2-module-type": "npx -p typescript tsc src/assets/fheroes2/fheroes2.js --lib esnext,dom --module commonjs --esModuleInterop --declaration --allowJs --emitDeclarationOnly --outDir src/assets/fheroes2/"
+    "codegen:fheroes2-module-type": "npx -p typescript tsc src/assets/fheroes2/fheroes2.module.js --lib esnext,dom --module commonjs --esModuleInterop --declaration --allowJs --emitDeclarationOnly --outDir src/assets/fheroes2/"
   },
   "author": "roman@turch.in",
   "license": "ISC",

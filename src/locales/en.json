@@ -5,7 +5,8 @@
       "Select data folder": "Select data folder",
       "Remove data": "Remove data",
       "Run": "Run",
-      "Select zip archive": "Select zip archive"
+      "Select zip archive": "Select zip archive",
+      "Toggle Fullscreen": "Toggle Fullscreen"
     },
     "error": {
       "Internal Server Error": "Internal Server Error",

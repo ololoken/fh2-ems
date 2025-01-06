@@ -1,0 +1,10 @@
+.idea
+.vscode
+.DS_Store
+node_modules
+dist
+
+
+fheroes2.data
+fheroes2.wasm
+fheroes2.js

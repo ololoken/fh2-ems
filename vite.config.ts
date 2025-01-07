@@ -8,7 +8,7 @@ export default defineConfig({
   root: dirname(fileURLToPath(import.meta.url)),
   plugins: [react(), commonjs()],
   envPrefix: 'FH2',
-  base: '/fheroes2',
+  base: '/fh2-ems',
   clearScreen: false,
   build: {
     outDir: './dist/',

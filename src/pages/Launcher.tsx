@@ -32,10 +32,11 @@ import { ModuleInstance } from './module'
 import { directoryInputHandler, zipInputHandler, zipInputReader } from './dataInput';
 import FolderIcon from "../components/icons/FolderIcon.tsx";
 import DemoIcon from "../components/icons/DemoIcon.tsx";
+import sha256 from "./sha256.ts";
 
 const DEMO_URL = 'https://archive.org/download/HeroesofMightandMagicIITheSuccessionWars_1020/h2demo.zip';
 const DEMO_DOWNLOAD_URL = `https://corsproxy.io/?url=${encodeURI(DEMO_URL)}`;
-const DEMO_HASH = ''
+const DEMO_HASH = '12048c8b03875c81e69534a3813aaf6340975e77b762dc1b79a4ff5514240e3c'
 
 export default () => {
   const { t } = useTranslation();
@@ -139,8 +140,14 @@ export default () => {
     instance.print(`Fetching demo data from [${DEMO_URL}]\nExpexted hash is [${DEMO_HASH}]`)
     fetch(DEMO_DOWNLOAD_URL)
       .then(res => res.blob())
-      .then(blob => zipInputReader(instance, setHasData, blob))
-      .catch(() => instance.print('Failed to get demo version'))
+      .then(async blob => {
+        instance.print('Checking hash...');
+        const hash = await sha256(blob);
+        if (hash !== DEMO_HASH) throw('Bad hash');
+        instance.print('Hash is ok... Initializing.');
+        zipInputReader(instance, setHasData, blob)
+      })
+      .catch(e => instance.print(`Failed to get demo version: ${e?.message ?? 'unknow error'}`))
       .finally(() => setInitialized(true))
   }
 

@@ -1,0 +1,38 @@
+name: build and deploy fh2-launcher
+on: 
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    container: emscripten/emsdk:3.1.74
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install gettext
+      - name: Checkout fheroes2🛡
+        uses: actions/checkout@v4
+        with:
+          name: ihhub/fheroes2
+          ref: refs/heads/master
+          path: fheroes2
+      - name: Build fheroes2🛡 wasm module 🔧
+        run: |
+          LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2" emmake make -f Makefile.emscripten -j "$(nproc)"
+
+      - name: Checkout launcher 🛎️
+        uses: actions/checkout@v4
+
+      - name: Install and Build 🔧
+        run: |
+          cp fheroes/fheroes2.{data, wasm, js} src/assets/fheroes2/
+          npm install
+          npm run build
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages-demo
+          folder: dist

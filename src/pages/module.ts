@@ -1,9 +1,9 @@
 import { Module, ModuleInitParams } from '../types/Module';
 
-import data from '../assets/fheroes2/fheroes2.module.data?url'
-import wasm from '../assets/fheroes2/fheroes2.module.wasm?url'
+import data from '../assets/fheroes2/fheroes2.data?url'
+import wasm from '../assets/fheroes2/fheroes2.wasm?url'
 
-import fheroes2 from '../assets/fheroes2/fheroes2.module';
+import fheroes2 from '../assets/fheroes2/fheroes2';
 
 export const ModuleInstance = ({ ENV, reportDownloadProgress, pushMessage, canvas }: ModuleInitParams) => {
   let module: Module;

@@ -3,7 +3,7 @@ import { Module } from '../types/Module';
 import { BlobReader, Uint8ArrayWriter, ZipReader } from '@zip.js/zip.js';
 
 const whitListedFolders = ['data', 'heroes2', 'maps', 'music'];
-const requiredFiles = ['data/HEROES2.AGG', 'data/HEROES2X.AGG']
+const requiredFiles = ['DATA/HEROES2.AGG']
 
 const filterInput = (relativePath: string) => {
   if (relativePath.endsWith('/')) return false;
@@ -18,6 +18,7 @@ const mkdirWithParents = (instance: Module) => (path: string) => {
   const parts = path.split('/');
   try { instance?.FS.lookupPath(parts.join('/')) }
   catch (ignore) {
+    instance.print(`Creating new directory [${path}]`);
     parts.reduce((p, part) => {
       p = [...p, part];
       try { instance?.FS.lookupPath(p.join('/')) }
@@ -41,12 +42,12 @@ export const directoryInputHandler = (instance: Module, setHasData: (hasData: bo
   const filtered = files.filter(({ webkitRelativePath }) => filterInput(webkitRelativePath));
 
   const requiredResolved = filtered.filter(({ webkitRelativePath: path }) =>
-    requiredFiles.some(rq => path.toLocaleLowerCase().endsWith(rq.toLocaleLowerCase()))).length === 2;
+    requiredFiles.some(rq => path.toLocaleLowerCase().endsWith(rq.toLocaleLowerCase()))).length === requiredFiles.length;
   if (!requiredResolved) return instance.print('Required data not found in directory');
 
   filtered.reduce((uploaded, file) => {
     const [fileName, ...path] = file.webkitRelativePath.split('/').reverse();
-    const [ignore, ...relativePath] = path.reverse();
+    const [, ...relativePath] = path.reverse();
 
     mkdirWithParents(instance)(`${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}`);
 
@@ -72,35 +73,45 @@ export const directoryInputHandler = (instance: Module, setHasData: (hasData: bo
   }, new Array<string>);
 }
 
+export const zipInputReader = (instance: Module, setHasData: (hasData: boolean) => void, file: Blob) => {
+  new ZipReader(new BlobReader(file)).getEntries({})
+    .then(entries => entries.filter(({ filename: relativePath }) => filterInput(relativePath)))
+    .then(filtered => {
+      const hasRootFolder = Object.keys(filtered
+        .reduce((names, { filename }) => ({ ...names, [`${filename.split('/').at(0)}`]: true }), <{[k: string]: boolean}>{}))
+        .length === 1;
+      filtered.reduce((uploaded, entry) => {
+        const [fileName, ...path] = entry.filename.split('/').reverse();
+        let relativePath: string[];
+        if (hasRootFolder) [, ...relativePath] = path.reverse();
+        else [...relativePath] = path.reverse();
+
+        const uri = `${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}/${fileName}`;
+        mkdirWithParents(instance)(`${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}`);
+
+        entry.getData?.(new Uint8ArrayWriter).then(data => {
+          instance.print(`Writing file ${uri} to virtual fs from provided zip archive`);
+          instance.FS.writeFile(`${uri}`, data, {
+            encoding: 'binary'
+          });
+          uploaded.push(uri);
+          if (uploaded.length === filtered.length) {
+            instance.print(`Data bundle looks ok. Continue initialization...`)
+            instance.FS.syncfs(false, err => {
+              if (err) return instance.print('Failed to sync FS');
+              setHasData(true)
+            })
+          }
+        })
+
+        return uploaded;
+      }, new Array<string>)
+    })
+}
+
 export const zipInputHandler = (instance: Module, setHasData: (hasData: boolean) => void) => ({ target }: Event) => {
   const input = target as HTMLInputElement;
   const file = input.files?.[0] ?? throwExpression('no file provided');
   input.value = '';
-  const reader = new ZipReader(new BlobReader(file));
-  reader.getEntries({})
-    .then(entries => entries.filter(({ filename: relativePath }) => filterInput(relativePath)))
-    .then(filtered => filtered.reduce((uploaded, entry) => {
-      const [fileName, ...path] = entry.filename.split('/').reverse();
-      const [ignore, ...relativePath] = path.reverse();
-
-      mkdirWithParents(instance)(`${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}`);
-
-      entry.getData?.(new Uint8ArrayWriter).then(data => {
-        const uri = `${instance.ENV.FHEROES2_DATA}/${relativePath.join('/')}/${fileName}`;
-        instance.print(`Writing file ${uri} to virtual fs from provided zip archive`);
-        instance.FS.writeFile(`${uri}`, data, {
-          encoding: 'binary'
-        });
-        uploaded.push(uri);
-        if (uploaded.length === filtered.length) {
-          instance.print(`Data bundle looks ok. Continue initialization...`)
-          instance.FS.syncfs(false, err => {
-            if (err) return instance.print('Failed to sync FS');
-            setHasData(true)
-          })
-        }
-      })
-
-      return uploaded;
-    }, new Array<string>))
+  zipInputReader(instance, setHasData, file);
 }

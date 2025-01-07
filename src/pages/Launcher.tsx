@@ -1,7 +1,17 @@
 import {
-  Card, Box,
-  CardContent, CardHeader,
-  ToggleButton, Tooltip, tooltipClasses, Button, Stack, CircularProgress
+  Card,
+  Box,
+  CardContent,
+  CardHeader,
+  ToggleButton,
+  Tooltip,
+  tooltipClasses,
+  Button,
+  Stack,
+  CircularProgress,
+  Menu,
+  MenuItem,
+  ListItemText, ListItemIcon
 } from '@mui/material';
 import BackgroundImage from '../assets/images/background.png'
 
@@ -19,7 +29,13 @@ import UploadIcon from '../components/icons/UploadIcon';
 import ZipIcon from '../components/icons/ZipIcon';
 import ActionConfirmation from '../components/ActionConfirmation';
 import { ModuleInstance } from './module'
-import { directoryInputHandler, zipInputHandler } from './dataInput';
+import { directoryInputHandler, zipInputHandler, zipInputReader } from './dataInput';
+import FolderIcon from "../components/icons/FolderIcon.tsx";
+import DemoIcon from "../components/icons/DemoIcon.tsx";
+
+const DEMO_URL = 'https://archive.org/download/HeroesofMightandMagicIITheSuccessionWars_1020/h2demo.zip';
+const DEMO_DOWNLOAD_URL = `https://corsproxy.io/?url=${encodeURI(DEMO_URL)}`;
+const DEMO_HASH = ''
 
 export default () => {
   const { t } = useTranslation();
@@ -32,6 +48,7 @@ export default () => {
   const [mainRunning, setMainRunning] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [hasData, setHasData] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement>();
 
   const [showConsole, setShowConsole] = useState(true)
   const [messages, setMessages] = useState<Array<string>>([]);
@@ -96,7 +113,7 @@ export default () => {
     }
   }, [instance])
 
-  useEffect(() => {
+  useEffect(() => {//handle folder input
     const { current } = directoryInput;
     if (!current || !instance) return;
 
@@ -115,6 +132,17 @@ export default () => {
 
     return () => current.removeEventListener('input', handler);
   }, [zipInput, instance]);
+
+  const fetchDemoData = () => {
+    if (!instance) return;
+    setInitialized(false);
+    instance.print(`Fetching demo data from [${DEMO_URL}]\nExpexted hash is [${DEMO_HASH}]`)
+    fetch(DEMO_DOWNLOAD_URL)
+      .then(res => res.blob())
+      .then(blob => zipInputReader(instance, setHasData, blob))
+      .catch(() => instance.print('Failed to get demo version'))
+      .finally(() => setInitialized(true))
+  }
 
   const clearPath = (basePath: string) => {
     if (!instance) return;
@@ -178,23 +206,32 @@ export default () => {
         action={<>
           <Stack direction={"row"} spacing={2}>
             {!initialized && <CircularProgress color="warning" size="34px" />}
+            {initialized && !hasData && <Button
+              sx={{ fontSize: '1em', height: '36px' }}
+              variant="contained"
+              onClick={e => setAnchorEl(e.currentTarget)}
+            >
+              <UploadIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} />{t('menu.Add game data')}
+            </Button>}
+              <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={() => setAnchorEl(undefined)}>
+                <MenuItem onClick={() => { zipInput.current?.click(); setAnchorEl(undefined) }} disabled={!zipInput.current} sx={{fontSize: '10px'}}>
+                  <ListItemIcon><ZipIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
+                  <ListItemText>{t('menu.Select zip archive')}</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => { directoryInput.current?.click(); setAnchorEl(undefined) }} disabled={!directoryInput.current} sx={{fontSize: '10px'}}>
+                  <ListItemIcon><FolderIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
+                  <ListItemText>{t('menu.Select data folder')}</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => { fetchDemoData(); setAnchorEl(undefined) }} sx={{fontSize: '10px'}}>
+                  <ListItemIcon><DemoIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
+                  <ListItemText>{t('menu.Try demo')}</ListItemText>
+                </MenuItem>
+              </Menu>
             {initialized && hasData && !mainRunning && <Button
                 sx={{ fontSize: '1em', height: '36px' }}
                 variant="contained"
                 onClick={() => runInstance()}
             ><LaunchIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Run')}</Button>}
-            {initialized && !hasData && <Button
-                sx={{ fontSize: '1em', height: '36px' }}
-                variant="contained"
-                disabled={!zipInput.current}
-                onClick={() => zipInput.current?.click()}
-            ><ZipIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Select zip archive')}</Button>}
-            {initialized && !hasData && <Button
-              sx={{ fontSize: '1em', height: '36px' }}
-              variant="contained"
-              disabled={!directoryInput.current}
-              onClick={() => directoryInput.current?.click()}
-            ><UploadIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /> {t('menu.Select data folder')}</Button>}
             {initialized && hasData && !mainRunning && <Button
               sx={{ fontSize: '1em', height: '36px' }}
               variant="contained"

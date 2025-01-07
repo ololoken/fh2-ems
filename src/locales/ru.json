@@ -6,7 +6,9 @@
       "Remove data": "Удалить ресурсы",
       "Run": "Запустить",
       "Select zip archive": "Архив zip",
-      "Toggle Fullscreen": "На весь экран"
+      "Toggle Fullscreen": "На весь экран",
+      "Add game data": "Загрузка ресурсов игры",
+      "Try demo": "Демо-версия"
     },
     "error": {
       "Internal Server Error": "Очень серьезная ошибка",

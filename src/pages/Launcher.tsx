@@ -20,19 +20,21 @@ import { useTheme } from '@mui/material/styles';
 import { useTranslation} from 'react-i18next';
 import { Module } from '../types/Module';
 
-import FullScreenIcon from '../components/icons/FullScreenIcon';
 import DeleteIcon from '../components/icons/DeleteIcon';
+import DemoIcon from '../components/icons/DemoIcon';
+import FolderIcon from '../components/icons/FolderIcon';
+import FullScreenIcon from '../components/icons/FullScreenIcon';
+import GlobeIcon from '../components/icons/GlobeIcon';
 import LaunchIcon from '../components/icons/LaunchIcon';
 import TerminalIcon from '../components/icons/TerminalIcon';
-import UploadIcon from '../components/icons/UploadIcon';
 
+import UploadIcon from '../components/icons/UploadIcon';
 import ZipIcon from '../components/icons/ZipIcon';
 import ActionConfirmation from '../components/ActionConfirmation';
 import { ModuleInstance } from './module'
 import { directoryInputHandler, zipInputHandler, zipInputReader } from './dataInput';
-import FolderIcon from "../components/icons/FolderIcon.tsx";
-import DemoIcon from "../components/icons/DemoIcon.tsx";
-import sha256 from "./sha256.ts";
+import sha256 from './sha256.ts';
+import useConfig from '../hooks/useConfig';
 
 const DEMO_URL = 'https://archive.org/download/HeroesofMightandMagicIITheSuccessionWars_1020/h2demo.zip';
 const DEMO_DOWNLOAD_URL = `https://corsproxy.io/?url=${encodeURI(DEMO_URL)}`;
@@ -40,8 +42,9 @@ const DEMO_HASH = '12048c8b03875c81e69534a3813aaf6340975e77b762dc1b79a4ff5514240
 
 export default () => {
   const { t } = useTranslation();
+  const config = useConfig();
   const theme = useTheme();
-
+console.log(config)
   const [downloadProgress, reportDownloadProgress] = useState(0);
 
   const [instance, setInstance] = useState<Module>();
@@ -49,7 +52,8 @@ export default () => {
   const [mainRunning, setMainRunning] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [hasData, setHasData] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement>();
+  const [uploadAnchorEl, setUploadAnchorEl] = useState<HTMLButtonElement>();
+  const [langAnchorEl, setLangAnchorEl] = useState<HTMLElement>();
 
   const [showConsole, setShowConsole] = useState(true)
   const [messages, setMessages] = useState<Array<string>>([]);
@@ -209,31 +213,43 @@ export default () => {
       <CardHeader
         titleTypographyProps={{ variant: 'subtitle1' }}
         title={''}
-        sx={{ p: '8px 12px', height: '44px' }}
+        sx={{ p: '8px 12px', height: '44px', '& .MuiCardHeader-action': { width: '100%' } }}
         action={<>
           <Stack direction={"row"} spacing={2}>
+            <Tooltip title='Language' slotProps={{ popper: { sx: {
+                  [`&.${tooltipClasses.popper}[data-popper-placement*="bottom"] .${tooltipClasses.tooltip}`]: { marginTop: '0px', color: '#000', fontSize: '1em' }
+                } }}}>
+              <ToggleButton value={-1} selected={Boolean(langAnchorEl)} sx={{ p: '3px 6px', height: '36px' }} onClick={e => setLangAnchorEl(e.currentTarget)}>
+                <GlobeIcon width="2.4em" height="2.4em" />
+              </ToggleButton>
+            </Tooltip>
+            <Menu open={Boolean(langAnchorEl)} anchorEl={langAnchorEl} onClose={() => setLangAnchorEl(undefined)}>
+              <MenuItem onClick={() => { config.onChangeLocalization('ru-RU'); setLangAnchorEl(undefined) }} disabled={!zipInput.current} sx={{fontSize: '10px', textDecoration: config.i18n === 'ru-RU' ? 'underline' : '' }}>RU</MenuItem>
+              <MenuItem onClick={() => { config.onChangeLocalization('en-US'); setLangAnchorEl(undefined) }} disabled={!directoryInput.current} sx={{fontSize: '10px', textDecoration: config.i18n === 'en-US' ? 'underline' : ''}}>EN</MenuItem>
+            </Menu>
+            <Box flex={1} />
             {!initialized && <CircularProgress color="warning" size="34px" />}
             {initialized && !hasData && <Button
               sx={{ fontSize: '1em', height: '36px' }}
               variant="contained"
-              onClick={e => setAnchorEl(e.currentTarget)}
+              onClick={e => setUploadAnchorEl(e.currentTarget)}
             >
               <UploadIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} />{t('menu.Add game data')}
             </Button>}
-              <Menu open={Boolean(anchorEl)} anchorEl={anchorEl} onClose={() => setAnchorEl(undefined)}>
-                <MenuItem onClick={() => { zipInput.current?.click(); setAnchorEl(undefined) }} disabled={!zipInput.current} sx={{fontSize: '10px'}}>
-                  <ListItemIcon><ZipIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
-                  <ListItemText>{t('menu.Select zip archive')}</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => { directoryInput.current?.click(); setAnchorEl(undefined) }} disabled={!directoryInput.current} sx={{fontSize: '10px'}}>
-                  <ListItemIcon><FolderIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
-                  <ListItemText>{t('menu.Select data folder')}</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => { fetchDemoData(); setAnchorEl(undefined) }} sx={{fontSize: '10px'}}>
-                  <ListItemIcon><DemoIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
-                  <ListItemText>{t('menu.Try demo')}</ListItemText>
-                </MenuItem>
-              </Menu>
+            <Menu open={Boolean(uploadAnchorEl)} anchorEl={uploadAnchorEl} onClose={() => setUploadAnchorEl(undefined)}>
+              <MenuItem onClick={() => { zipInput.current?.click(); setUploadAnchorEl(undefined) }} disabled={!zipInput.current} sx={{fontSize: '10px'}}>
+                <ListItemIcon><ZipIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
+                <ListItemText>{t('menu.Select zip archive')}</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => { directoryInput.current?.click(); setUploadAnchorEl(undefined) }} disabled={!directoryInput.current} sx={{fontSize: '10px'}}>
+                <ListItemIcon><FolderIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
+                <ListItemText>{t('menu.Select data folder')}</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => { fetchDemoData(); setUploadAnchorEl(undefined) }} sx={{fontSize: '10px'}}>
+                <ListItemIcon><DemoIcon width="2.4em" height="2.4em" style={{ margin: '0 1em 0 0' }} /></ListItemIcon>
+                <ListItemText>{t('menu.Try demo')}</ListItemText>
+              </MenuItem>
+            </Menu>
             {initialized && hasData && !mainRunning && <Button
                 sx={{ fontSize: '1em', height: '36px' }}
                 variant="contained"
@@ -247,14 +263,14 @@ export default () => {
             {mainRunning && <Tooltip title={t('menu.Toggle Fullscreen')} slotProps={{ popper: { sx: {
                   [`&.${tooltipClasses.popper}[data-popper-placement*="bottom"] .${tooltipClasses.tooltip}`]: { marginTop: '0px', color: '#000', fontSize: '1em' }
                 } }}}>
-                <ToggleButton value="web" selected={fullscreen} sx={{ p: '3px 6px', height: '36px' }} onClick={() => doFullScreen()}>
+                <ToggleButton value={-1} selected={fullscreen} sx={{ p: '3px 6px', height: '36px' }} onClick={() => doFullScreen()}>
                     <FullScreenIcon width="2.4em" height="2.4em" />
                 </ToggleButton>
             </Tooltip>}
             <Tooltip title={t('menu.Toggle Console')} slotProps={{ popper: { sx: {
                 [`&.${tooltipClasses.popper}[data-popper-placement*="bottom"] .${tooltipClasses.tooltip}`]: { marginTop: '0px', color: '#000', fontSize: '1em' }
               } }}}>
-                <ToggleButton value="web" selected={showConsole} sx={{ p: '3px 6px', height: '36px' }} onClick={() => setShowConsole(!showConsole)}>
+                <ToggleButton value={-1} selected={showConsole} sx={{ p: '3px 6px', height: '36px' }} onClick={() => setShowConsole(!showConsole)}>
                   <TerminalIcon width="2.4em" height="2.4em" />
               </ToggleButton>
             </Tooltip>

@@ -1,13 +1,13 @@
 import { createContext, ReactNode } from 'react';
 import config from '../config';
 import useLocalStorage from '../hooks/useLocalStorage';
+import {useTranslation} from "react-i18next";
 
-export type I18n =  'en' | 'ru';
+export type I18n =  'en-US' | 'ru-RU';
 
 const initialState = {
   ...config,
-  onChangeLocalization: (lang: I18n) => {},
-  onChangeCredentials: (creds: string) => {}
+  onChangeLocalization: (lang: I18n) => {}
 };
 
 const ConfigContext = createContext(initialState);
@@ -17,27 +17,20 @@ type ConfigProviderProps = {
 };
 
 function ConfigProvider({ children }: ConfigProviderProps) {
-  const [config, setConfig] = useLocalStorage('verde$config', initialState);
-  const onChangeCredentials = (creds: string) => {
-    setConfig({
-      ...config,
-      creds
-    });
-  };
+  const [config, setConfig] = useLocalStorage('fh2-ems$config', initialState);
+  const { i18n } = useTranslation();
 
-  const onChangeLocalization = (lang: I18n) => {
-    setConfig({
+  const onChangeLocalization = (lang: I18n) => i18n.changeLanguage(lang)
+    .then(() => setConfig({
       ...config,
       i18n: lang
-    });
-  };
+    }))
 
   return (
     <ConfigContext.Provider
       value={{
         ...config,
-        onChangeCredentials,
-        onChangeLocalization
+        onChangeLocalization,
       }}
     >
       {children}

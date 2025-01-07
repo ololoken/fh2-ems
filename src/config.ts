@@ -1,4 +1,3 @@
 export default {
-  i18n: 'ru',
-  creds: '',
+  i18n: 'en-US',
 };

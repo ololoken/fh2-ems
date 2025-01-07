@@ -44,7 +44,6 @@ export default () => {
   const { t } = useTranslation();
   const config = useConfig();
   const theme = useTheme();
-console.log(config)
   const [downloadProgress, reportDownloadProgress] = useState(0);
 
   const [instance, setInstance] = useState<Module>();

@@ -4,7 +4,8 @@ on:
     branches:
       - main
 jobs:
-  build-and-deploy:
+
+  build-fheroes2-emscripten-module:
     runs-on: ubuntu-latest
     container: emscripten/emsdk:3.1.74
     steps:
@@ -17,29 +18,35 @@ jobs:
         with:
           repository: ihhub/fheroes2
           ref: refs/heads/master
-          path: fheroes2
       - name: Build fheroes2🛡 wasm module 🔧
         run: |
-          cd fheroes2
           LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2" emmake make -f Makefile.emscripten -j "$(nproc)"
-          cd ..
+          mkdir -p fheroes2-emscripten-module
+          cp fheroes2.data fheroes2-emscripten-module
+          cp fheroes2.wasm fheroes2-emscripten-module
+          cp fheroes2.js fheroes2-emscripten-module
+      - name: Store fheroes2 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fheroes2-emscripten-module
+          path: fheroes2-emscripten-module
 
+  build-fh2-ems-launcher:
+    runs-on: ubuntu-latest
+    needs: build-fheroes2-emscripten-module
+    steps:
       - name: Checkout launcher 🛎️
         uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          path: fh2-ems
-
+          name: fheroes2-emscripten-module
+          path: src/assets/fheroes2/
       - name: Install and Build 🔧
         run: |
-          cd fh2-ems
-          cp ../fheroes2/fheroes2.data src/assets/fheroes2/
-          cp ../fheroes2/fheroes2.wasm src/assets/fheroes2/
-          cp ../fheroes2/fheroes2.js src/assets/fheroes2/
           npm install
           npm run build
-
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages-demo
-          folder: fh2-ems/dist
+          folder: dist

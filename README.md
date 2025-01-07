@@ -4,5 +4,5 @@ Write me
 2. Copy `fheroes2.wasm`, `fheroes2.data` and `fheroes2.js` to `src/assets/fheroes2`
 3. Running in dev mode is standard `npm install && npm run dev`
 
-[Try now](http://)
+[Try now](https://ololoken.github.io/fh2-ems/)
 =========

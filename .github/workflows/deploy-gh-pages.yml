@@ -15,19 +15,26 @@ jobs:
       - name: Checkout fheroes2🛡
         uses: actions/checkout@v4
         with:
-          name: ihhub/fheroes2
+          repository: ihhub/fheroes2
           ref: refs/heads/master
           path: fheroes2
       - name: Build fheroes2🛡 wasm module 🔧
         run: |
+          cd fheroes2
           LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2" emmake make -f Makefile.emscripten -j "$(nproc)"
+          cd ..
 
       - name: Checkout launcher 🛎️
         uses: actions/checkout@v4
+        with:
+          path: fh2-ems
 
       - name: Install and Build 🔧
         run: |
-          cp fheroes/fheroes2.{data, wasm, js} src/assets/fheroes2/
+          cd fh2-ems
+          cp ../fheroes2/fheroes2.data src/assets/fheroes2/
+          cp ../fheroes2/fheroes2.wasm src/assets/fheroes2/
+          cp ../fheroes2/fheroes2.js src/assets/fheroes2/
           npm install
           npm run build
 

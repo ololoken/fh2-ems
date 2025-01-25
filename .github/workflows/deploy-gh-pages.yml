@@ -20,7 +20,7 @@ jobs:
           ref: refs/heads/master
       - name: Build fheroes2🛡 wasm module 🔧
         run: |
-          LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2" emmake make -f Makefile.emscripten -j "$(nproc)"
+          LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2" CCFLAGS=" -O3 -DNDEBUG" emmake make -f Makefile.emscripten -j "$(nproc)"
           mkdir -p fheroes2-emscripten-module
           cp fheroes2.data fheroes2-emscripten-module
           cp fheroes2.wasm fheroes2-emscripten-module

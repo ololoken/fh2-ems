@@ -110,7 +110,7 @@ export default () => {
     }
     catch (ignore) {
       instance.FS.mkdir(`${instance.ENV.FHEROES2_DATA}`);
-      instance.print('No local data found...')
+      instance.print('No local data found...');
     }
     finally {
       setInitialized(true);

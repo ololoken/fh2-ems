@@ -19,7 +19,7 @@ const mkdirWithParents = (instance: Module) => (path: string) => {
   try { instance?.FS.lookupPath(parts.join('/')) }
   catch (ignore) {
     instance.print(`Creating new directory [${path}]`);
-    parts.reduce((p, part) => {
+    parts.filter(p => p).reduce((p, part) => {
       p = [...p, part];
       try { instance?.FS.lookupPath(p.join('/')) }
       catch (ignore) { instance?.FS.mkdir(p.join('/')) }

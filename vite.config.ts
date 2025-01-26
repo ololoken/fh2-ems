@@ -6,10 +6,18 @@ import commonjs from 'vite-plugin-commonjs';
 
 export default defineConfig({
   root: dirname(fileURLToPath(import.meta.url)),
-  plugins: [react(), commonjs()],
+  plugins: [react(), commonjs({
+    filter: id => id.endsWith('fheroes2.js')
+  })],
   envPrefix: 'FH2',
   base: '/fh2-ems',
   clearScreen: false,
+  server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
+  },
   build: {
     outDir: './dist/',
     target: 'esnext',

@@ -7,7 +7,7 @@ jobs:
 
   build-fheroes2-emscripten-module:
     runs-on: ubuntu-latest
-    container: emscripten/emsdk:3.1.74
+    container: emscripten/emsdk:4.0.1
     steps:
       - name: Install dependencies
         run: |
@@ -16,11 +16,11 @@ jobs:
       - name: Checkout fheroes2🛡
         uses: actions/checkout@v4
         with:
-          repository: ihhub/fheroes2
+          repository: ololoken/fheroes2
           ref: refs/heads/master
       - name: Build fheroes2🛡 wasm module 🔧
         run: |
-          LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2" CCFLAGS=" -O3 -DNDEBUG" emmake make -f Makefile.emscripten -j "$(nproc)"
+          LDFLAGS="-sMODULARIZE -sEXPORTED_RUNTIME_METHODS=callMain -sEXPORT_ALL -sEXPORT_NAME=fheroes2 -sAUTO_JS_LIBRARIES=1 -sINCOMING_MODULE_JS_API=ENVIRONMENT,GL_MAX_TEXTURE_IMAGE_UNITS,SDL_canPlayWithWebAudio,SDL_numSimultaneouslyQueuedBuffers,INITIAL_MEMORY,wasmMemory,arguments,buffer,canvas,doNotCaptureKeyboard,dynamicLibraries,elementPointerLock,extraStackTrace,forcedAspectRatio,instantiateWasm,keyboardListeningElement,freePreloadedMediaOnUse,loadSplitModule,locateFile,logReadFiles,mainScriptUrlOrBlob,mem,monitorRunDependencies,noExitRuntime,noInitialRun,onAbort,onCustomMessage,onExit,onFree,onFullScreen,onMalloc,onRealloc,onRuntimeInitialized,postMainLoop,postRun,preInit,preMainLoop,preRun,preinitializedWebGLContext,preloadPlugins,print,printErr,setStatus,statusMessage,stderr,stdin,stdout,thisProgram,wasm,wasmBinary,websocket" emmake make -f Makefile.emscripten -j "$(nproc)"
           mkdir -p fheroes2-emscripten-module
           cp fheroes2.data fheroes2-emscripten-module
           cp fheroes2.wasm fheroes2-emscripten-module

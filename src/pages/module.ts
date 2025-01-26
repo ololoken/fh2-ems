@@ -1,5 +1,7 @@
 import { Module, ModuleInitParams } from '../types/Module';
 
+import mainScriptUrlOrBlob from '../assets/fheroes2/fheroes2.js?url'
+
 import data from '../assets/fheroes2/fheroes2.data?url'
 import wasm from '../assets/fheroes2/fheroes2.wasm?url'
 
@@ -11,6 +13,7 @@ export const ModuleInstance = ({ ENV, reportDownloadProgress, pushMessage, canva
     print: msg => module.printErr?.(msg),
     printErr: msg => pushMessage?.(msg),
     canvas,
+    mainScriptUrlOrBlob: `${mainScriptUrlOrBlob}?pthread-worker`,
     preInit: [() => { Object.assign(module.ENV, ENV) }],
     preRun: [
       () => {

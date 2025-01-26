@@ -18,6 +18,7 @@ export type Module = {
     unlink: (path: string) => void
     rmdir: (path: string) => void
   }
+  mainScriptUrlOrBlob: string | Blob;
   preInit: (() => void)[]
   preRun: (() => void)[]
   locateFile: (path: string) => string
